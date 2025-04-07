@@ -27,13 +27,18 @@ function loadMessagesFromCSV(filePath) {
         const messages = [];
 
         fs.createReadStream(filePath)
-            .pipe(csv({ headers: false }))
+            .pipe(csv({ headers: false, skipLines: 0 }))
             .on('data', (row) => {
-                if (messages.length > 85171) {
-                    console.log(row);
+
+                // Split Message with \r\n
+                const rawMessage = row['0'];
+                if (rawMessage) {
+                    const splitMessages = rawMessage.split(/\r?\n/); // handles both \r\n and \n
+                    splitMessages.forEach((msg) => {
+                        const trimmed = msg.trim();
+                        if (trimmed) messages.push(trimmed);
+                    })
                 }
-                const message = row['0'] // Take first column value
-                if (message) messages.push(message);
             })
             .on('end', () => {
                 console.log(`Loaded ${messages.length} messages from CSV`);
