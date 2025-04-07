@@ -68,16 +68,16 @@ router.get('/search', async (req, res) => {
         FROM messages m
         JOIN contacts c ON (c.id = m.sender_id OR c.id = m.receiver_id)
         WHERE (
-            m.content ILIKE $1 OR 
-            c.name ILIKE $1 OR
-            c.phone_number ILIKE $1
+            to_tsvector('english', m.content) @@ to_tsquery('english', $1) OR 
+            to_tsvector('english', c.name) @@ to_tsquery('english', $1) OR
+            c.phone_number = $2 --exact search
         )
         ORDER BY m.created_at DESC
-        OFFSET $2 LIMIT $3
+        OFFSET $3 LIMIT $4
     `;
 
     try {
-        const result = await pool.query(query, [`%${searchValue}%`, offset, limit]);
+        const result = await pool.query(query, [`%${searchValue}%`, searchValue, offset, limit]);
         res.json(result.rows);
         console.log(result.rows)
     } catch (e) {
