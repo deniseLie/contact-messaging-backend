@@ -75,9 +75,12 @@ router.get('/search', async (req, res) => {
         ORDER BY m.created_at DESC
         OFFSET $3 LIMIT $4
     `;
+    console.time('Query Execution Time'); // Start measuring time
 
     try {
         const result = await pool.query(query, [`%${searchValue}%`, searchValue, offset, limit]);
+        console.timeEnd('Query Execution Time'); // End measuring time
+
         res.json(result.rows);
         console.log(result.rows)
     } catch (e) {
@@ -85,5 +88,40 @@ router.get('/search', async (req, res) => {
         res.status(500).send('Query failed');
     }
 })
+
+// router.get('/search', async (req, res) => {
+//     const searchValue = req.query.searchValue || '';
+//     const page = parseInt(req.query.page) || 1;
+//     const limit = 50;
+//     const offset = (page - 1) * limit;
+
+//     const query = `
+//         SELECT 
+//             m.*,
+//             c.name AS contact_name,
+//             c.phone_number AS contact_phone_number
+//         FROM messages m
+//         JOIN contacts c ON (c.id = m.sender_id OR c.id = m.receiver_id)
+//         WHERE (
+//             m.content ILIKE $1 OR 
+//             c.name ILIKE $1 OR
+//             c.phone_number ILIKE $1
+//         )
+//         ORDER BY m.created_at DESC
+//         OFFSET $2 LIMIT $3;
+//     `;
+//     console.time('Query Execution Time'); // Start measuring time
+
+//     try {
+//         const result = await pool.query(query, [`%${searchValue}%`, offset, limit]);
+//         console.timeEnd('Query Execution Time'); // End measuring time
+        
+//         res.json(result.rows);
+//         console.log(result.rows)
+//     } catch (e) {
+//         console.error(e);
+//         res.status(500).send('Query failed');
+//     }
+// })
 
 module.exports = router;
